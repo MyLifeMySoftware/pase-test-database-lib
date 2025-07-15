@@ -19,22 +19,29 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+@Slf4j
 @Entity
 @Table(name = "users")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = {"roles", "refreshTokens"})
 public class User implements UserDetails {
 
     @Id
@@ -97,10 +104,10 @@ public class User implements UserDetails {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
-    private Set<Role> roles;
+    private Set<Role> roles = new HashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<RefreshToken> refreshTokens;
+    private Set<RefreshToken> refreshTokens = new HashSet<>();
 
     @PrePersist
     protected void onCreate() {
@@ -116,10 +123,27 @@ public class User implements UserDetails {
     // UserDetails implementation
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return roles.stream()
-                .flatMap(role -> role.getPermissions().stream())
-                .map(permission -> new SimpleGrantedAuthority(permission.getName()))
-                .collect(Collectors.toSet());
+        Set<GrantedAuthority> authorities = new HashSet<>();
+
+        log.debug("Getting authorities for user: {}", username);
+        log.debug("User has {} roles", roles != null ? roles.size() : 0);
+
+        if (roles != null) {
+            for (Role role : roles) {
+                log.debug("Processing role: {}", role.getName());
+                authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName()));
+
+                if (role.getPermissions() != null) {
+                    log.debug("Role {} has {} permissions", role.getName(), role.getPermissions().size());
+                    for (UserPermission permission : role.getPermissions()) {
+                        authorities.add(new SimpleGrantedAuthority(permission.getName()));
+                    }
+                }
+            }
+        }
+
+        log.debug("Final authorities: {}", authorities);
+        return authorities;
     }
 
     @Override
@@ -154,5 +178,22 @@ public class User implements UserDetails {
 
     public String getFullName() {
         return firstName + " " + lastName;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        User user = (User) o;
+        return Objects.equals(id, user.id) && Objects.equals(username, user.username);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, username);
     }
 }

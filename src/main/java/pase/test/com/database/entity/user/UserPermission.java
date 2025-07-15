@@ -2,12 +2,9 @@ package pase.test.com.database.entity.user;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -22,24 +19,32 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "roles")
+@Table(name = "permissions")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Role {
+public class UserPermission {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Role name is required")
-    @Size(max = 50, message = "Role name must not exceed 50 characters")
+    @NotBlank(message = "Permission name is required")
+    @Size(max = 100, message = "Permission name must not exceed 100 characters")
     @Column(unique = true, nullable = false)
     private String name;
 
     @Size(max = 255, message = "Description must not exceed 255 characters")
     private String description;
+
+    @NotBlank(message = "Resource is required")
+    @Size(max = 50, message = "Resource must not exceed 50 characters")
+    private String resource;
+
+    @NotBlank(message = "Action is required")
+    @Size(max = 50, message = "Action must not exceed 50 characters")
+    private String action;
 
     @Builder.Default
     @Column(name = "is_active")
@@ -51,16 +56,8 @@ public class Role {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @ManyToMany(mappedBy = "roles")
-    private Set<User> users;
-
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "role_permissions",
-            joinColumns = @JoinColumn(name = "role_id"),
-            inverseJoinColumns = @JoinColumn(name = "permission_id")
-    )
-    private Set<UserPermission> permissions;
+    @ManyToMany(mappedBy = "permissions")
+    private Set<Role> roles;
 
     @PrePersist
     protected void onCreate() {

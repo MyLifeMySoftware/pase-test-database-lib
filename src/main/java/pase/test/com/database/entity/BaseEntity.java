@@ -7,6 +7,7 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import java.time.LocalDateTime;
@@ -17,11 +18,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.Comment;
+import org.hibernate.annotations.GenericGenerator;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import pase.test.com.database.annotations.OptionalUuidGenerator;
 
 @Getter
 @Setter
@@ -32,10 +33,12 @@ import pase.test.com.database.annotations.OptionalUuidGenerator;
 @EntityListeners(AuditingEntityListener.class)
 public class BaseEntity {
 
+
     @Comment("Unique identifier of the entity")
     @Id
-    @OptionalUuidGenerator
-    @Column(columnDefinition = "VARCHAR2(36)", length = 36)
+    @GeneratedValue(generator = "optional-uuid")
+    @GenericGenerator(name = "optional-uuid", strategy = "pase.test.com.database.entity.OptionalUuidGeneratorImpl")
+    @Column(name = "id", columnDefinition = "VARCHAR(36)", length = 36)
     private String id;
 
     @Comment("Indicates if the entity is active and available for operations")

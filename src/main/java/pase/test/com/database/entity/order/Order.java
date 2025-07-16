@@ -1,6 +1,8 @@
 package pase.test.com.database.entity.order;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.io.Serial;
@@ -27,18 +29,6 @@ public class Order extends BaseEntity implements Serializable {
     @Serial
     private static final long serialVersionUID = 4005399473005749088L;
 
-    @ManyToOne
-    @Comment("Order status reference")
-    private OrderStatus orderStatus;
-
-    @ManyToOne
-    @Comment("Driver reference")
-    private Driver driver;
-
-    @ManyToOne
-    @Comment("Assignment attachment reference")
-    private AssignmentAttachment assignmentAttachment;
-
     @Comment("Order number")
     private String orderNumber;
 
@@ -54,8 +44,20 @@ public class Order extends BaseEntity implements Serializable {
     @Comment("Order estimated duration in minutes")
     private Integer estimatedDurationMinutes;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by_user_id")
     @Comment("Created by user reference")
     private User createdByUser;
 
+    @ManyToOne
+    @Comment("Order status reference")
+    private OrderStatus orderStatus;
+
+    @ManyToOne
+    @Comment("Driver reference")
+    private Driver driver;
+
+    @ManyToOne
+    @Comment("Assignment attachment reference")
+    private AssignmentAttachment assignmentAttachment;
 }
